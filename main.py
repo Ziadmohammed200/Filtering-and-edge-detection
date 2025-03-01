@@ -6,6 +6,7 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget
 import pyqtgraph as pg
 from Filters import filter
+from Edge_detector import edge_detector
 from PyQt5.QtCore import Qt
 
 Ui_MainWindow, QtBaseClass = uic.loadUiType("untitled.ui")
@@ -29,9 +30,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.original_image = None  # Store the loaded image
         self.output_image = None    # Store the output image
+        self.last_state = None
 
         # Connect ComboBox to noise function
         self.comboBox_noise.currentIndexChanged.connect(self.apply_noise)
+
 
         # Connect ComboBox to filters function
         self.comboBox_lowpass.currentIndexChanged.connect(self.Apply_Filters)
@@ -39,6 +42,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_reset.clicked.connect(self.reset_program)
 
         self.checkBox_normalize.stateChanged.connect(self.toggle_normalization)
+
+        # Connect ComboBox to edge detection function
+        self.comboBox_edge.currentIndexChanged.connect(self.apply_edge_detection)
+
+        self.checkBox_equalize.stateChanged.connect(self.equalize)
+
+        # Kernels initialization
+        self.kernel_sobel_x =[[-1, 0, 1],
+                              [-2, 0, 2],
+                              [-1, 0, 1]]
+
+        self.kernel_sobel_y = [[-1, -2, -1],
+                               [0, 0, 0],
+                               [1, 2, 1]]
+
+        self.kernel_prewitt_x = [[-1, 0, 1],
+                                [-1, 0, 1],
+                                [-1, 0, 1]]
+
+        self.kernel_prewitt_y = [[-1,-1,-1],
+                                 [0,0,0],
+                                 [1,1,1]]
+
+        self.kernel_robert_x = [[1, 0],
+                                [0, -1]]
+
+        self.kernel_robert_y = [[0, 1],
+                                [-1, 0]]
+
+        self.edge_detector = edge_detector()
+
+        self.freq_dict = {}
 
 
 
@@ -192,6 +227,54 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         img_item.setTransform(pg.QtGui.QTransform().rotate(-90))  # Rotate 90 degrees
         plot_widget.addItem(img_item)  # Add image to plot
 ###############################################################################################################
+
+    def apply_edge_detection(self,index):
+        if index == 0:
+            return
+        elif index == 1:
+            if self.output_image is None:
+                self.output_image = self.edge_detector.apply_edge_detection(self.original_image,self.kernel_sobel_x,self.kernel_sobel_y,kernel_size=3)
+            else:
+                self.output_image = self.edge_detector.apply_edge_detection(self.output_image,self.kernel_sobel_x,self.kernel_sobel_y,kernel_size=3)
+        elif index == 2 :
+            if self.output_image is None:
+                self.output_image = self.edge_detector.apply_edge_detection(self.original_image,self.kernel_robert_x,self.kernel_robert_y,kernel_size=2)
+            else:
+                self.output_image = self.edge_detector.apply_edge_detection(self.output_image,self.kernel_robert_x,self.kernel_robert_y,kernel_size=2)
+        elif index == 3 :
+            if self.output_image is None:
+                self.output_image = self.edge_detector.apply_canny_edge_detection(self.original_image)
+            else:
+                self.output_image = self.edge_detector.apply_canny_edge_detection(self.output_image)
+        else:
+            if self.output_image is None:
+                self.output_image = self.edge_detector.apply_edge_detection(self.original_image, self.kernel_prewitt_x,
+                                                                            self.kernel_prewitt_y,kernel_size=3)
+            else:
+                self.output_image = self.edge_detector.apply_edge_detection(self.output_image, self.kernel_prewitt_x,
+                                                                            self.kernel_prewitt_y,kernel_size=3)
+        self.display_image(self.output_image, self.plot_output)
+###########################################################################################################
+    def plot_histogram(self,image):
+        self.freq_dict = self.edge_detector.form_histogram_dict(image)
+        self.edge_detector.plot_histogram(self.freq_dict,self.plot_second)
+
+    def equalize(self):
+        if self.checkBox_equalize.isChecked():
+            self.last_state = self.output_image
+            if self.output_image is None:
+                self.plot_histogram(self.original_image)
+                self.output_image = self.edge_detector.equalize(self.original_image,self.freq_dict)
+            else:
+                self.plot_histogram(self.output_image)
+                self.output_image = self.edge_detector.equalize(self.output_image,self.freq_dict)
+
+            self.display_image(self.output_image, self.plot_output)
+        else:
+            self.display_image(self.last_state, self.plot_output)
+            self.plot_second.clear()
+
+###########################################################################################################
     def reset_program(self):
         """Reset the program to its initial state."""
         self.output_image = None  # Clear output image
@@ -201,7 +284,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.comboBox_lowpass.setCurrentIndex(0)  # Reset filter selection
         self.plot_output.clear()  # Clear output display
         self.plot_original.clear()  # Clear input display
+        self.plot_second.clear()
+
         print("🔄 Program reset successfully!")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
