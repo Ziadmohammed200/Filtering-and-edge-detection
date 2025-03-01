@@ -180,7 +180,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         # normalized_image = (image - mean) / (max_val - min_val)  # Mean normalization
-        normalized_image = input_image/max_val  # Mean normalization
+        normalized_image = (input_image*255)/max_val  # Mean normalization
         self.output_image=normalized_image
         self.display_image(self.output_image, self.plot_output)
             
