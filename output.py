@@ -517,7 +517,7 @@ class Ui_MainWindow(object):
         self.comboBox_lowpass.setItemText(1, _translate("MainWindow", "Gaussian"))
         self.comboBox_lowpass.setItemText(2, _translate("MainWindow", "Average"))
         self.comboBox_lowpass.setItemText(3, _translate("MainWindow", "Median"))
-        self.comboBox_edge.setItemText(0, _translate("MainWindow", "Edge Detector"))
+        self.comboBox_edge.setItemText(0, _translate("MainWindow", "No Edge Detection"))
         self.comboBox_edge.setItemText(1, _translate("MainWindow", "Sobel Mask"))
         self.comboBox_edge.setItemText(2, _translate("MainWindow", "Roberts Mask"))
         self.comboBox_edge.setItemText(3, _translate("MainWindow", "Canny Mask"))

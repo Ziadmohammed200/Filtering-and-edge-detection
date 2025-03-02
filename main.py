@@ -9,6 +9,7 @@ from Filters import filter
 from Edge_detector import edge_detector
 from PyQt5.QtCore import Qt
 from image_processing import image_process
+from Histogram_eq_graphs import TwoGraphsWindow
 
 Ui_MainWindow, QtBaseClass = uic.loadUiType("untitled.ui")
 
@@ -29,7 +30,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Connect Gray Scale button 
         self.pushButton_grayscale.clicked.connect(self.convert2gray)
 
-        self.pushButton_disthist.clicked.connect(self.darw_hist)
+        self.pushButton_disthist.clicked.connect(self.plot_histogram_and_distribution)
+
 
         # Store image path
         self.image_path = None
@@ -39,6 +41,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.last_state = None
         self.second_image=None
         self.iscolored=False
+        self.two_graphs = TwoGraphsWindow()
 
         # Connect ComboBox to noise function
         self.comboBox_noise.currentIndexChanged.connect(self.apply_noise)
@@ -55,6 +58,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # Connect ComboBox to edge detection function
         self.comboBox_edge.currentIndexChanged.connect(self.apply_edge_detection)
+        self.comboBox_edge.setItemText(0,'No edge detection')
 
         self.checkBox_equalize.stateChanged.connect(self.toggle_equalize)
 
@@ -260,7 +264,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def apply_edge_detection(self,index):
         if index == 0:
-            return
+            self.output_image = self.original_image
         elif index == 1:
             if self.output_image is None:
                 self.output_image = self.edge_detector.apply_edge_detection(self.original_image,self.kernel_sobel_x,self.kernel_sobel_y,kernel_size=3)
@@ -285,9 +289,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                                                             self.kernel_prewitt_y,kernel_size=3)
         self.display_image(self.output_image, self.plot_output)
 ###########################################################################################################
-    def plot_histogram(self,image):
-        self.freq_dict = self.edge_detector.form_histogram_dict(image)
-        self.edge_detector.plot_histogram(self.freq_dict,self.plot_second)
+    def plot_histogram_and_distribution(self):
+        self.freq_dict = self.edge_detector.form_histogram_dict(self.original_image)
+        self.edge_detector.plot_histogram(self.freq_dict,self.two_graphs.histogram_graph)
+        cdf = self.edge_detector.call_cdf()
+        self.edge_detector.plot_cdf(cdf,self.two_graphs.distribution_graph)
+        self.two_graphs.show()
     
     def toggle_equalize(self, state):
         """Apply equalize when the checkbox is checked."""
@@ -301,13 +308,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.display_image(self.output_image, self.plot_output)
 
     def equalize(self):
-        if self.output_image is None:
-            self.plot_histogram(self.original_image)
+        if self.original_image is not None:
+            self.freq_dict = self.edge_detector.form_histogram_dict(self.original_image)
             self.output_image = self.edge_detector.equalize(self.original_image,self.freq_dict)
-        else:
-            self.plot_histogram(self.output_image)
-            self.output_image = self.edge_detector.equalize(self.output_image,self.freq_dict)
-
         self.display_image(self.output_image, self.plot_output)
 ####################################################################################################
     def convert2gray(self):
@@ -369,6 +372,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.checkBox_normalize.setChecked(False)  # Uncheck normalization checkbox
         self.comboBox_noise.setCurrentIndex(0)  # Reset filter selection
         self.comboBox_lowpass.setCurrentIndex(0)  # Reset filter selection
+        self.comboBox_edge.setCurrentIndex(0)
+        self.checkBox_equalize.setChecked(False)
         self.plot_output.clear()  # Clear output display
         self.plot_original.clear()  # Clear input display
         self.plot_second.clear()

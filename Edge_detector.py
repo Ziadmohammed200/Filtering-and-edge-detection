@@ -1,9 +1,14 @@
 import cv2
 import numpy as np
 import pyqtgraph as pg
+from PyQt5.QtWidgets import QGraphicsPathItem
+from PyQt5.QtGui import QPainterPath, QPen
+from PyQt5.QtCore import Qt
+
 class edge_detector:
     def __init__(self):
-        pass
+        self.cdf = {}
+
     def apply_edge_detection(self, image,kernel_x,kernel_y,kernel_size):
         if len(image.shape) == 3:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -56,6 +61,7 @@ class edge_detector:
         for key in pdf_keys:
             cumulative_sum += probability_density_func[key]
             cumulative_distribution_func[key] = cumulative_sum
+        self.cdf = cumulative_distribution_func
 
         for key in cumulative_distribution_func:
             new_pixels_value[key] = int(round(cumulative_distribution_func[key] * 255))
@@ -63,6 +69,8 @@ class edge_detector:
         for key in new_pixels_value:
             image_copy[image == key] = new_pixels_value[key]
         return image_copy
+    def call_cdf(self):
+        return self.cdf
     def plot_histogram(self,freq_dict,graph):
         graph.clear()
         graph.setLabel("left", "Frequency")
@@ -75,6 +83,27 @@ class edge_detector:
         # Plot histogram using a bar chart
         bg = pg.BarGraphItem(x=pixel_values, height=frequencies, width=1, brush="blue")
         graph.addItem(bg)
+
+
+
+    def plot_cdf(self,cdf_dict, scene):
+        scene.clear()
+
+        # Create a path for the CDF line
+        path = QPainterPath()
+        sorted_items = sorted(cdf_dict.items())
+
+
+
+        # Draw lines connecting the points
+        for pixel, cdf_value in sorted_items:
+            path.lineTo(pixel, cdf_value)  # Scale for visibility
+
+        # Create a QGraphicsPathItem and add it to the scene
+        path_item = QGraphicsPathItem(path)
+        path_item.setPen(QPen(Qt.blue, 0.01))  # Set line color and width
+        scene.addItem(path_item)
+
 
 
 
