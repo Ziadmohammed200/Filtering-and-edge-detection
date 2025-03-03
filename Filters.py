@@ -96,6 +96,41 @@ class filter:
                 filtered_image[i, j] = median_value 
 
         return filtered_image
+#####################################################################################################################
+    def Frequncey_filter(image, filter_type, d=30):
+        """
+        Apply a low-pass or high-pass filter in the frequency domain.
+        
+        :param image: Grayscale input image
+        :param filter_type: 'low' for low-pass, 'high' for high-pass
+        :param d: Cutoff frequency
+        :return: Filtered image
+        """
+        # Convert to float and compute the FFT
+        f = np.fft.fft2(image)
+        fshift = np.fft.fftshift(f)
+
+        # Get image dimensions
+        rows, cols = image.shape
+        crow, ccol = rows // 2, cols // 2  # Center
+
+        # Create filter mask
+        mask = np.zeros((rows, cols), np.uint8)
+        
+        if filter_type == 'low':
+            mask[crow-d:crow+d, ccol-d:ccol+d] = 1  # Pass low frequencies
+        elif filter_type == 'high':
+            mask = np.ones((rows, cols), np.uint8)
+            mask[crow-d:crow+d, ccol-d:ccol+d] = 0  # Block low frequencies
+        
+        # Apply mask and inverse FFT
+        fshift_filtered = fshift * mask
+        f_ishift = np.fft.ifftshift(fshift_filtered)
+        img_filtered = np.fft.ifft2(f_ishift)
+        img_filtered = np.abs(img_filtered)
+
+        return img_filtered
+    
 
     
 

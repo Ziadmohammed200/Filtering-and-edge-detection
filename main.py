@@ -8,6 +8,7 @@ import pyqtgraph as pg
 from Filters import filter
 from Edge_detector import edge_detector
 from PyQt5.QtCore import Qt
+from image_processing import image_process
 
 Ui_MainWindow, QtBaseClass = uic.loadUiType("untitled.ui")
 
@@ -25,15 +26,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Connect Browse button to function
         self.pushButton_browse.clicked.connect(self.load_image)
 
+        # Connect Gray Scale button 
+        self.pushButton_grayscale.clicked.connect(self.convert2gray)
+
+        self.pushButton_disthist.clicked.connect(self.darw_hist)
+
         # Store image path
         self.image_path = None
 
         self.original_image = None  # Store the loaded image
         self.output_image = None    # Store the output image
         self.last_state = None
+        self.second_image=None
+        self.iscolored=False
 
         # Connect ComboBox to noise function
         self.comboBox_noise.currentIndexChanged.connect(self.apply_noise)
+
+        self.comboBox_freq.currentIndexChanged.connect(self.freq_filter)
 
 
         # Connect ComboBox to filters function
@@ -46,7 +56,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Connect ComboBox to edge detection function
         self.comboBox_edge.currentIndexChanged.connect(self.apply_edge_detection)
 
-        self.checkBox_equalize.stateChanged.connect(self.equalize)
+        self.checkBox_equalize.stateChanged.connect(self.toggle_equalize)
+
+        self.spinBox_cutoff.valueChanged.connect(self.update_cutoff)
+        self.spinBox_cutoff.setValue(30)
+        self.cutoff_value=30
+
 
         # Kernels initialization
         self.kernel_sobel_x =[[-1, 0, 1],
@@ -79,26 +94,41 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def load_image(self):
-        """Open file dialog to load an image and display it on plot_original."""
+        """Open file dialog to load an image and display it accordingly."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Images (*.png *.jpg *.jpeg *.bmp *.tiff)")
 
         if file_path:
-            file_path = os.path.abspath(file_path)  # Get absolute path
-            file_path = file_path.replace("\\", "/")  # Ensure correct path format
+            file_path = os.path.abspath(file_path).replace("\\", "/")  # Normalize file path
 
             if not os.path.exists(file_path):
                 print("❌ Error: File not found!", file_path)
                 return
-            
-            self.reset_program()
 
-            self.original_image = cv2.imread(file_path )
+            # Track button state
+            if not hasattr(self, 'image_stage'):
+                self.image_stage = 0  # Initialize stage tracker
 
-            if self.original_image is None:
-                print("❌ Error: Cannot load image. Check file format and permissions.")
-                return
+            if self.image_stage == 0:
+                # First load: Show image in plot_original
+                self.reset_program()
+                self.original_image = cv2.imread(file_path)
+                if self.original_image is None:
+                    print("❌ Error: Cannot load image. Check file format and permissions.")
+                    return
+                self.display_image(self.original_image, self.plot_original)
+                self.pushButton_browse.setText("Browse Another Image")  # Change button text
+                self.image_stage = 1  # Move to next stage
 
-            self.display_image(self.original_image, self.plot_original)  # Show image on original plot
+            elif self.image_stage == 1:
+                # Second load: Show image in plot_second and reset button text
+                self.second_image = cv2.imread(file_path)
+                if self.second_image is None:
+                    print("❌ Error: Cannot load image. Check file format and permissions.")
+                    return
+                self.display_image(self.second_image, self.plot_second)
+                self.pushButton_browse.setText("Browse")  # Reset button text
+                self.image_stage = 0 # Move to next stage
+
 
 #############################################################################################
     def apply_noise(self):
@@ -258,27 +288,84 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def plot_histogram(self,image):
         self.freq_dict = self.edge_detector.form_histogram_dict(image)
         self.edge_detector.plot_histogram(self.freq_dict,self.plot_second)
+    
+    def toggle_equalize(self, state):
+        """Apply equalize when the checkbox is checked."""
+        if state == Qt.Checked:
+            # Store a backup of the current output image before normalizing
+            self.backup_image = self.output_image.copy() if self.output_image is not None else self.original_image.copy()
+            self.equalize()
+        else:
+            # Reset to the original output image
+            self.output_image = self.backup_image.copy()
+            self.display_image(self.output_image, self.plot_output)
 
     def equalize(self):
-        if self.checkBox_equalize.isChecked():
-            self.last_state = self.output_image
-            if self.output_image is None:
-                self.plot_histogram(self.original_image)
-                self.output_image = self.edge_detector.equalize(self.original_image,self.freq_dict)
-            else:
-                self.plot_histogram(self.output_image)
-                self.output_image = self.edge_detector.equalize(self.output_image,self.freq_dict)
-
-            self.display_image(self.output_image, self.plot_output)
+        if self.output_image is None:
+            self.plot_histogram(self.original_image)
+            self.output_image = self.edge_detector.equalize(self.original_image,self.freq_dict)
         else:
-            self.display_image(self.last_state, self.plot_output)
-            self.plot_second.clear()
+            self.plot_histogram(self.output_image)
+            self.output_image = self.edge_detector.equalize(self.output_image,self.freq_dict)
+
+        self.display_image(self.output_image, self.plot_output)
+####################################################################################################
+    def convert2gray(self):
+        """Apply selected filter type from comboBox_filters."""
+        if self.original_image is None:
+            print("⚠ No image loaded!")
+            return
+        self.output_image=image_process.convert_rgb_to_gray(self.original_image)
+        self.iscolored=True
+        self.display_image(self.output_image, self.plot_output)
+
+    def darw_hist(self):
+        if self.iscolored == True:
+            image_process.plot_histogram_with_cdf(self.original_image)
+
+########################################################################################################
+    def update_cutoff(self):
+        self.cutoff_value = self.spinBox_cutoff.value()
+        print(f"Updated Cutoff: {self.cutoff_value}")
+    
+    def freq_filter(self):
+        """Apply selected filter type from comboBox_filters."""
+        if self.original_image is None:
+            print("⚠ No image loaded!")
+            return
+
+        selected_filter = self.comboBox_freq.currentText()
+
+        # Ensure we are working on the correct image
+        input_image = self.output_image if self.output_image is not None else self.original_image
+
+        # Convert to grayscale if not already
+        if len(input_image.shape) == 3:  # Check if the image is colored (RGB/BGR)
+            input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
+
+        if selected_filter == "Low Pass Filter":
+            self.output_image=filter.Frequncey_filter(input_image,"low",self.cutoff_value)
+        elif selected_filter == "High Pass Filter":
+            self.output_image=filter.Frequncey_filter(input_image,"high",self.cutoff_value)
+        elif selected_filter == "Freq Domain Filter":
+            self.output_image=self.original_image
+
+        self.display_image(self.output_image, self.plot_output)
+
+    
+    
+        
+
 
 ###########################################################################################################
     def reset_program(self):
         """Reset the program to its initial state."""
+        self.pushButton_browse.setText("Browse")  # Reset button text
+        self.image_stage=0
+        self.iscolored=False
         self.output_image = None  # Clear output image
         self.original_image = None  # Clear original image
+        self.second_image=None    # Clear second image
         self.checkBox_normalize.setChecked(False)  # Uncheck normalization checkbox
         self.comboBox_noise.setCurrentIndex(0)  # Reset filter selection
         self.comboBox_lowpass.setCurrentIndex(0)  # Reset filter selection
