@@ -416,6 +416,9 @@ class Ui_MainWindow(object):
         self.pushButton_browse.setMaximumSize(QtCore.QSize(16777215, 50))
         self.pushButton_browse.setObjectName("pushButton_browse")
         self.verticalLayout_4.addWidget(self.pushButton_browse)
+        self.checkBox_toggle = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkBox_toggle.setObjectName("checkBox_toggle")
+        self.verticalLayout_4.addWidget(self.checkBox_toggle)
         self.comboBox_noise = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox_noise.setObjectName("comboBox_noise")
         self.comboBox_noise.addItem("")
@@ -509,6 +512,7 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.pushButton_browse.setText(_translate("MainWindow", "Browse"))
+        self.checkBox_toggle.setText(_translate("MainWindow", "Toggle High/Low (Hyprid Image)"))
         self.comboBox_noise.setItemText(0, _translate("MainWindow", "No Noise"))
         self.comboBox_noise.setItemText(1, _translate("MainWindow", "Gaussian Noise"))
         self.comboBox_noise.setItemText(2, _translate("MainWindow", "Salt & Pepper Noise"))

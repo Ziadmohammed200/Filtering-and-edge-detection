@@ -455,6 +455,13 @@ QCheckBox::indicator:disabled {
          </widget>
         </item>
         <item>
+         <widget class="QCheckBox" name="checkBox_toggle">
+          <property name="text">
+           <string>Toggle High/Low (Hyprid Image)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QComboBox" name="comboBox_noise">
           <item>
            <property name="text">
@@ -506,7 +513,7 @@ QCheckBox::indicator:disabled {
          <widget class="QComboBox" name="comboBox_edge">
           <item>
            <property name="text">
-            <string>Edge Detector</string>
+            <string>No Edge Detection</string>
            </property>
           </item>
           <item>
