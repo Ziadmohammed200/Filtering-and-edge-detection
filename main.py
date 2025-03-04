@@ -56,6 +56,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.checkBox_normalize.stateChanged.connect(self.toggle_normalization)
 
+        self.checkBox_toggle.stateChanged.connect(self.toggle_switch)
+
         # Connect ComboBox to edge detection function
         self.comboBox_edge.currentIndexChanged.connect(self.apply_edge_detection)
         self.comboBox_edge.setItemText(0,'No edge detection')
@@ -65,6 +67,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spinBox_cutoff.valueChanged.connect(self.update_cutoff)
         self.spinBox_cutoff.setValue(30)
         self.cutoff_value=30
+        self.Switch=False
 
 
         # Kernels initialization
@@ -120,7 +123,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     print("❌ Error: Cannot load image. Check file format and permissions.")
                     return
                 self.display_image(self.original_image, self.plot_original)
-                self.pushButton_browse.setText("Browse Another Image")  # Change button text
+                self.pushButton_browse.setText("Browse Another Image And Hyprid It")  # Change button text
                 self.image_stage = 1  # Move to next stage
 
             elif self.image_stage == 1:
@@ -132,6 +135,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.display_image(self.second_image, self.plot_second)
                 self.pushButton_browse.setText("Browse")  # Reset button text
                 self.image_stage = 0 # Move to next stage
+                self.Hyprid()
 
 
 #############################################################################################
@@ -212,7 +216,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Apply the selected filter
         filter_functions = {
             "Average": filter.average_filter,
-            "Gaussian": filter.Gaussian_Filter,
+            "Gaussian": filter.gaussian_filter,
             "Median": filter.median_filter
         }
 
@@ -354,6 +358,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.output_image=self.original_image
 
         self.display_image(self.output_image, self.plot_output)
+###########################################################################################
+
+    def toggle_switch(self, state):
+        if state == Qt.Checked:
+            self.switch = True
+        else:
+            self.switch = False
+    def Hyprid(self):
+        if self.original_image is None or self.second_image is None:
+            print("⚠ Missing one or two images")
+            return
+        
+
+        self.original_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2GRAY)
+        self.second_image = cv2.cvtColor(self.second_image, cv2.COLOR_BGR2GRAY)
+
+
+        
+        Hypird_image=filter.create_hybrid_image(self.original_image, self.second_image,switch=self.Switch)
+        self.display_image(Hypird_image, self.plot_hyprid)
+
 
     
     
@@ -369,6 +394,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.output_image = None  # Clear output image
         self.original_image = None  # Clear original image
         self.second_image=None    # Clear second image
+        self.cutoff_value=30
+        self.Switch=False
         self.checkBox_normalize.setChecked(False)  # Uncheck normalization checkbox
         self.comboBox_noise.setCurrentIndex(0)  # Reset filter selection
         self.comboBox_lowpass.setCurrentIndex(0)  # Reset filter selection
@@ -377,6 +404,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.plot_output.clear()  # Clear output display
         self.plot_original.clear()  # Clear input display
         self.plot_second.clear()
+        self.plot_hyprid.clear()
 
         print("🔄 Program reset successfully!")
 

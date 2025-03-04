@@ -1,17 +1,18 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from  Filters import filter 
 
 class image_process:
     def __init__(self):
         pass
-    def convert_rgb_to_gray(image):
+    def convert_rgb_to_gray(self,image):
         """Manually convert an RGB image to grayscale using the luminance formula."""
         b, g, r = cv2.split(image)  # Split into channels
         grayscale = (0.2989 * r + 0.5870 * g + 0.1140 * b).astype(np.uint8)  # Luminance formula
         return grayscale
 
-    def plot_histogram_with_cdf(image):
+    def plot_histogram_with_cdf(self,image):
         """Plot R, G, B histograms and their cumulative distribution functions (CDFs)."""
         
         # Split channels
@@ -44,3 +45,5 @@ class image_process:
 
         plt.tight_layout()
         plt.show()
+###################################################################################################################3
+
