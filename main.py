@@ -387,13 +387,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         Hypird_image=filter.create_hybrid_image(self.original_image, self.second_image,self.low_cutoff_value,self.high_cutoff_value,switch=self.Switch)
         self.display_image(Hypird_image, self.plot_hyprid)
-
-
-    
-    
-        
-
-
 ###########################################################################################################
     def reset_program(self):
         """Reset the program to its initial state."""
