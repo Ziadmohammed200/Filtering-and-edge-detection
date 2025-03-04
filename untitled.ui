@@ -668,18 +668,22 @@ QCheckBox::indicator:disabled {
                </sizepolicy>
               </property>
               <property name="text">
-               <string>  Local Th. Const.</string>
+               <string>  Local Th. Method.</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="spinBox_threshconst">
-              <property name="minimumSize">
-               <size>
-                <width>118</width>
-                <height>20</height>
-               </size>
-              </property>
+             <widget class="QComboBox" name="comboBox_localmethod">
+              <item>
+               <property name="text">
+                <string>Mean</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Gaussian</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
