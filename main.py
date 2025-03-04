@@ -10,7 +10,8 @@ from Edge_detector import edge_detector
 from PyQt5.QtCore import Qt
 from image_processing import image_process
 from Histogram_eq_graphs import TwoGraphsWindow
-
+import output
+from thresholding import *
 Ui_MainWindow, QtBaseClass = uic.loadUiType("untitled.ui")
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -31,8 +32,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_grayscale.clicked.connect(self.convert2gray)
 
         self.pushButton_disthist.clicked.connect(self.plot_histogram_and_distribution)
-
-
+    
         # Store image path
         self.image_path = None
 
@@ -103,6 +103,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.edge_detector = edge_detector()
 
         self.freq_dict = {}
+
+        self.checkBox_global.stateChanged.connect(self.toggle_global_thresholding)
+        self.checkBox_local.stateChanged.connect(self.toggle_local_thresholding)
+        self.comboBox_localmethod.currentIndexChanged.connect(self.toggle_local_thresholding_method)
 
 
 
@@ -387,6 +391,43 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         Hypird_image=filter.create_hybrid_image(self.original_image, self.second_image,self.low_cutoff_value,self.high_cutoff_value,switch=self.Switch)
         self.display_image(Hypird_image, self.plot_hyprid)
+############################################################################################
+
+    def toggle_global_thresholding(self, state):
+        """Apply global thresholding when the checkbox is checked."""
+        if state == Qt.Checked:
+            self.backup_image = self.output_image.copy() if self.output_image is not None else self.original_image.copy()
+            self.output_image = otsu_binarization(self.backup_image)
+            self.display_image(self.output_image, self.plot_output)
+            
+        else:
+            if hasattr(self, "backup_image"):
+                self.output_image = self.backup_image.copy()
+            self.display_image(self.output_image, self.plot_output)
+    
+    def toggle_local_thresholding(self, state):
+        if state == Qt.Checked:
+            self.backup_image = self.output_image.copy() if self.output_image is not None else self.original_image.copy()
+            method = self.comboBox_localmethod.currentText().lower()
+            self.output_image = adaptive_threshold(self.backup_image, method = method )
+            self.display_image(self.output_image, self.plot_output)
+        else:
+            if hasattr(self, "backup_image"):
+                self.output_image = self.backup_image.copy()
+            self.display_image(self.output_image, self.plot_output)
+            
+    def toggle_local_thresholding_method(self):
+        if self.checkBox_local.isChecked():
+            self.toggle_local_thresholding(Qt.Checked)
+        else:
+            self.toggle_local_thresholding(Qt.Unchecked)
+ 
+
+    
+    
+        
+
+
 ###########################################################################################################
     def reset_program(self):
         """Reset the program to its initial state."""

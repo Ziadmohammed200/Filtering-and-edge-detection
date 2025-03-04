@@ -46,6 +46,9 @@ def adaptive_threshold(image, block_size=11, C=2, method='mean', sigma=2):
     Returns:
         Binary thresholded image.
     """
+    if len(image.shape) == 3 and image.shape[2] == 3:
+        image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+
     if block_size % 2 == 0:
         block_size += 1
     k = block_size // 2
