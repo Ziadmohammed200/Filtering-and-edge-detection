@@ -35,9 +35,43 @@ def otsu_binarization(img):
     _, binary_img = cv.threshold(blur, thresh, 255, cv.THRESH_BINARY)
     return binary_img
 
-#Adaptive (local) Thresholding
-def local_thresholding(img):
-    pass
-
+def adaptive_threshold(image, block_size=11, C=2, method='mean', sigma=2):
+    """
+    Args:
+        image: Grayscale image (uint8).
+        block_size: Odd integer (e.g., 3, 5, 11).
+        C: Constant subtracted from the mean.
+        method: 'mean' or 'gaussian'.
+        sigma: Standard deviation for Gaussian kernel.
+    Returns:
+        Binary thresholded image.
+    """
+    if block_size % 2 == 0:
+        block_size += 1
+    k = block_size // 2
+    
+    # Pad image to handle borders
+    padded = cv.copyMakeBorder(image, k, k, k, k, cv.BORDER_REFLECT)
+    binary = np.zeros_like(image, dtype=np.uint8)
+    
+    if method == 'gaussian':
+        x = np.arange(-k, k+1)
+        y = np.arange(-k, k+1)
+        x, y = np.meshgrid(x, y)
+        kernel = np.exp(-(x**2 + y**2) / (2 * sigma**2))
+        kernel /= kernel.sum()
+    
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            region = padded[i:i+block_size, j:j+block_size]
+            
+            if method == 'mean':
+                threshold = np.mean(region) - C
+            elif method == 'gaussian':
+                threshold = np.sum(region * kernel) - C
+            
+            binary[i, j] = 255 if image[i, j] > threshold else 0
+    
+    return binary
 
 
