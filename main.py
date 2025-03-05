@@ -64,9 +64,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.checkBox_equalize.stateChanged.connect(self.toggle_equalize)
 
-        self.spinBox_cutoff.valueChanged.connect(self.update_cutoff)
-        self.spinBox_cutoff.setValue(30)
-        self.cutoff_value=30
+        self.spinBox_lowcutoff.valueChanged.connect(self.update_low_cutoff)
+        self.spinBox_highcutoff.valueChanged.connect(self.update_high_cutoff)
+
+
+        self.spinBox_lowcutoff.setValue(30)
+        self.spinBox_highcutoff.setValue(30)
+
+
+        self.low_cutoff_value=30
+        self.high_cutoff_value=30
         self.Switch=False
 
 
@@ -331,9 +338,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             image_process.plot_histogram_with_cdf(self.original_image)
 
 ########################################################################################################
-    def update_cutoff(self):
-        self.cutoff_value = self.spinBox_cutoff.value()
-        print(f"Updated Cutoff: {self.cutoff_value}")
+    def update_high_cutoff(self):
+        self.high_cutoff_value = self.spinBox_highcutoff.value()
+        print(f"Updated Cutoff: {self.high_cutoff_value}")
+    def update_low_cutoff(self):
+        self.low_cutoff_value = self.spinBox_lowcutoff.value()
+        print(f"Updated Cutoff: {self.low_cutoff_value}")
     
     def freq_filter(self):
         """Apply selected filter type from comboBox_filters."""
@@ -351,9 +361,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
 
         if selected_filter == "Low Pass Filter":
-            self.output_image=filter.Frequncey_filter(input_image,"low",self.cutoff_value)
+            self.output_image=filter.frequency_filter(input_image,"low",self.low_cutoff_value)
         elif selected_filter == "High Pass Filter":
-            self.output_image=filter.Frequncey_filter(input_image,"high",self.cutoff_value)
+            self.output_image=filter.frequency_filter(input_image,"high",self.high_cutoff_value)
         elif selected_filter == "Freq Domain Filter":
             self.output_image=self.original_image
 
@@ -362,21 +372,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def toggle_switch(self, state):
         if state == Qt.Checked:
-            self.switch = True
+            self.Switch = True
         else:
-            self.switch = False
+            self.Switch = False
     def Hyprid(self):
         if self.original_image is None or self.second_image is None:
             print("⚠ Missing one or two images")
             return
+        print(self.Switch)
         
 
         self.original_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2GRAY)
         self.second_image = cv2.cvtColor(self.second_image, cv2.COLOR_BGR2GRAY)
 
-
-        
-        Hypird_image=filter.create_hybrid_image(self.original_image, self.second_image,switch=self.Switch)
+        Hypird_image=filter.create_hybrid_image(self.original_image, self.second_image,self.low_cutoff_value,self.high_cutoff_value,switch=self.Switch)
         self.display_image(Hypird_image, self.plot_hyprid)
 
 
@@ -394,8 +403,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.output_image = None  # Clear output image
         self.original_image = None  # Clear original image
         self.second_image=None    # Clear second image
-        self.cutoff_value=30
+        self.high_cutoff_value=30
+        self.low_cutoff_value=30
         self.Switch=False
+        self.spinBox_lowcutoff.setValue(30)
+        self.spinBox_highcutoff.setValue(30)
         self.checkBox_normalize.setChecked(False)  # Uncheck normalization checkbox
         self.comboBox_noise.setCurrentIndex(0)  # Reset filter selection
         self.comboBox_lowpass.setCurrentIndex(0)  # Reset filter selection
