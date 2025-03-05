@@ -6,42 +6,46 @@ from  Filters import filter
 class image_process:
     def __init__(self):
         pass
-    def convert_rgb_to_gray(self,image):
+    def convert_rgb_to_gray(image):
         """Manually convert an RGB image to grayscale using the luminance formula."""
         b, g, r = cv2.split(image)  # Split into channels
         grayscale = (0.2989 * r + 0.5870 * g + 0.1140 * b).astype(np.uint8)  # Luminance formula
         return grayscale
 
-    def plot_histogram_with_cdf(self,image):
-        """Plot R, G, B histograms and their cumulative distribution functions (CDFs)."""
-        
+    def plot_hist_4color(image):
         # Split channels
-        b, g, r = cv2.split(image)  # OpenCV loads images in BGR order
+        R, G, B = cv2.split(image)
 
-        # Create figure with subplots
-        fig, axes = plt.subplots(2, 3, figsize=(15, 8))  # 2 rows, 3 columns
+        # Function to calculate histogram and CDF
+        def calculate_histogram_cdf(channel):
+            hist, bins = np.histogram(channel.flatten(), bins=256, range=[0,256])
+            cdf = hist.cumsum()  # Compute cumulative sum
+            cdf = cdf / float(cdf.max())  # Normalize CDF to [0,1]
+            return hist, cdf
 
-        # Function to plot histogram and CDF
-        def plot_channel_histogram(ax_hist, ax_cdf, channel, color, label):
-            """Helper function to plot histogram and CDF for each channel."""
-            hist, bins = np.histogram(channel.flatten(), bins=256, range=[0, 256])
-            cdf = hist.cumsum()  # Compute CDF
-            cdf_normalized = cdf * hist.max() / cdf.max()  # Normalize for visualization
+        # Compute histogram and CDF for each channel
+        hist_R, cdf_R = calculate_histogram_cdf(R)
+        hist_G, cdf_G = calculate_histogram_cdf(G)
+        hist_B, cdf_B = calculate_histogram_cdf(B)
 
-            # Plot histogram
-            ax_hist.plot(hist, color=color)
-            ax_hist.set_title(f"{label} Histogram")
-            ax_hist.set_xlim([0, 256])
+        # Plot the results
+        fig, axes = plt.subplots(2, 3, figsize=(15, 8))
 
-            # Plot CDF
-            ax_cdf.plot(cdf_normalized, color=color, linestyle="--")
-            ax_cdf.set_title(f"{label} CDF")
-            ax_cdf.set_xlim([0, 256])
+        # Plot histograms
+        axes[0, 0].bar(range(256), hist_R, color='red', alpha=0.7)
+        axes[0, 0].set_title('Red Histogram')
+        axes[0, 1].bar(range(256), hist_G, color='green', alpha=0.7)
+        axes[0, 1].set_title('Green Histogram')
+        axes[0, 2].bar(range(256), hist_B, color='blue', alpha=0.7)
+        axes[0, 2].set_title('Blue Histogram')
 
-        # Plot histograms and CDFs for R, G, B channels
-        plot_channel_histogram(axes[0, 0], axes[1, 0], r, 'red', "Red")    # Red histogram & CDF
-        plot_channel_histogram(axes[0, 1], axes[1, 1], g, 'green', "Green")  # Green histogram & CDF
-        plot_channel_histogram(axes[0, 2], axes[1, 2], b, 'blue', "Blue")  # Blue histogram & CDF
+        # Plot CDFs
+        axes[1, 0].plot(cdf_R, color='red')
+        axes[1, 0].set_title('Red CDF')
+        axes[1, 1].plot(cdf_G, color='green')
+        axes[1, 1].set_title('Green CDF')
+        axes[1, 2].plot(cdf_B, color='blue')
+        axes[1, 2].set_title('Blue CDF')
 
         plt.tight_layout()
         plt.show()

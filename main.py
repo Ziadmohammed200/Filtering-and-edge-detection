@@ -11,6 +11,9 @@ from PyQt5.QtCore import Qt
 from image_processing import image_process
 from Histogram_eq_graphs import TwoGraphsWindow
 import output
+from PyQt5.QtGui import QPen, QPainterPath
+from PyQt5.QtWidgets import QGraphicsPathItem
+
 from thresholding import *
 Ui_MainWindow, QtBaseClass = uic.loadUiType("untitled.ui")
 
@@ -234,6 +237,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if selected_filter in filter_functions:
             self.output_image = filter_functions[selected_filter](input_image)
             self.display_image(self.output_image, self.plot_output)
+        elif selected_filter == "LP Filter Type":
+            self.output_image = self.original_image
+            self.display_image(self.output_image, self.plot_output)
+
         else:
             print(f"⚠ Unknown filter selected: {selected_filter}")
 ################################################################################################
@@ -305,12 +312,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.display_image(self.output_image, self.plot_output)
 ###########################################################################################################
     def plot_histogram_and_distribution(self):
-        self.freq_dict = self.edge_detector.form_histogram_dict(self.original_image)
-        self.edge_detector.plot_histogram(self.freq_dict,self.two_graphs.histogram_graph)
-        cdf = self.edge_detector.call_cdf()
-        self.edge_detector.plot_cdf(cdf,self.two_graphs.distribution_graph)
-        self.two_graphs.show()
-    
+        if self.iscolored:
+            image_process.plot_hist_4color(self.original_image)
+        else:
+            self.freq_dict = self.edge_detector.form_histogram_dict(self.original_image)
+            self.edge_detector.plot_histogram(self.freq_dict,self.two_graphs.histogram_graph)
+            cdf = self.edge_detector.call_cdf()
+            self.edge_detector.plot_cdf(cdf,self.two_graphs.distribution_graph)
+            self.two_graphs.show()
+
+        
     def toggle_equalize(self, state):
         """Apply equalize when the checkbox is checked."""
         if state == Qt.Checked:
@@ -337,9 +348,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.iscolored=True
         self.display_image(self.output_image, self.plot_output)
 
-    def darw_hist(self):
-        if self.iscolored == True:
-            image_process.plot_histogram_with_cdf(self.original_image)
 
 ########################################################################################################
     def update_high_cutoff(self):
