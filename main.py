@@ -109,7 +109,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.checkBox_global.stateChanged.connect(self.toggle_global_thresholding)
         self.checkBox_local.stateChanged.connect(self.toggle_local_thresholding)
-        self.comboBox_localmethod.currentIndexChanged.connect(self.toggle_local_thresholding_method)
+        self.comboBox_localmethod.currentIndexChanged.connect(self.toggle_local_thresholding)
 
 
 
@@ -413,10 +413,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.output_image = self.backup_image.copy()
             self.display_image(self.output_image, self.plot_output)
     
-    def toggle_local_thresholding(self, state):
-        if state == Qt.Checked:
-            self.backup_image = self.output_image.copy() if self.output_image is not None else self.original_image.copy()
+    def toggle_local_thresholding(self):
+        if self.checkBox_local.isChecked():
+
+            self.backup_image = self.original_image.copy() if self.output_image is not None else self.original_image.copy()
             method = self.comboBox_localmethod.currentText().lower()
+            print(method)
             self.output_image = adaptive_threshold(self.backup_image, method = method )
             self.display_image(self.output_image, self.plot_output)
         else:
@@ -424,11 +426,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.output_image = self.backup_image.copy()
             self.display_image(self.output_image, self.plot_output)
             
-    def toggle_local_thresholding_method(self):
-        if self.checkBox_local.isChecked():
-            self.toggle_local_thresholding(Qt.Checked)
-        else:
-            self.toggle_local_thresholding(Qt.Unchecked)
+    # def toggle_local_thresholding_method(self):
+    #     if self.checkBox_local.isChecked():
+    #         self.toggle_local_thresholding(Qt.Checked)
+    #     else:
+    #         self.toggle_local_thresholding(Qt.Unchecked)
  
 
     
@@ -451,6 +453,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spinBox_lowcutoff.setValue(30)
         self.spinBox_highcutoff.setValue(30)
         self.checkBox_normalize.setChecked(False)  # Uncheck normalization checkbox
+        self.checkBox_toggle.setChecked(False)  # Uncheck normalization checkbox
         self.comboBox_noise.setCurrentIndex(0)  # Reset filter selection
         self.comboBox_lowpass.setCurrentIndex(0)  # Reset filter selection
         self.comboBox_edge.setCurrentIndex(0)

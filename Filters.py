@@ -174,8 +174,8 @@ class filter:
         low_pass_result = (low_pass_result - low_pass_result.min()) / (low_pass_result.max() - low_pass_result.min())
         high_pass_result = (high_pass_result - high_pass_result.min()) / (high_pass_result.max() - high_pass_result.min())
 
-        # Scale the contributions manually (alpha = 0.6, beta = 0.4 for better effect)
-        alpha, beta = 0.6, 0.4
+        # Scale the contributions manually (alpha = 0.5, beta = 0.5 for better effect)
+        alpha, beta = 0.5, 0.5
         hybrid_image = alpha * low_pass_result + beta * high_pass_result
 
         # Normalize the final result to 0-255
